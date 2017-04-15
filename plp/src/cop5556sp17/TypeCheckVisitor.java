@@ -61,101 +61,65 @@ public class TypeCheckVisitor implements ASTVisitor {
 
 	@Override
 	public Object visitBinaryChain(BinaryChain binaryChain, Object arg) throws Exception {
-		// TODO 
-		TypeName val1=(TypeName)binaryChain.getE0().visit(this,null);
-		TypeName val2=(TypeName)binaryChain.getE1().visit(this,null);
-		Token token = binaryChain.getE1().firstToken;
+		Chain chain=binaryChain.getE0();
+		ChainElem chainElem =binaryChain.getE1();
+		
+		TypeName t1=(TypeName) chain.visit(this, null);
+		TypeName t2=(TypeName) chainElem.visit(this, null);
+		Token firstElemChain=chainElem.firstToken;
 		
 		if(binaryChain.getArrow().kind.equals(ARROW))
 		{
-			if(val1.equals(URL)&&val2.equals(IMAGE))
-			{
-				binaryChain.val=IMAGE;
-			}
-			else if(val1.equals(FILE)&&val2.equals(IMAGE))
-			{
-				binaryChain.val=IMAGE;
-			}
-			else if(val1.equals(FRAME) && binaryChain.getE1() instanceof FrameOpChain)
-			{
-				if(token.kind.equals(KW_XLOC)||token.kind.equals(KW_YLOC))
-				{
-					binaryChain.val=INTEGER;
-				}
-				else if(token.kind.equals(KW_SHOW)||token.kind.equals(KW_HIDE)||token.kind.equals(KW_MOVE))
-				{
-					binaryChain.val=FRAME;
-				}
-				else 
-				{
-					throw new TypeCheckException("Invalid type found" + binaryChain.firstToken.getText()+ " at " + binaryChain.firstToken.getLinePos());
-				}
-			}
-			else if(val1.equals(IMAGE) && binaryChain.getE1() instanceof ImageOpChain)
-			{
-				if(token.kind.equals(OP_WIDTH)||token.kind.equals((OP_HEIGHT)))
-				{
-					binaryChain.val=INTEGER;
-				}
-				else if(token.kind.equals(KW_SCALE))
-				{
-					binaryChain.val=IMAGE;
-				}
-				else
-				{
-					throw new TypeCheckException("Invalid type found" + binaryChain.firstToken.getText()+ " at " + binaryChain.firstToken.getLinePos());
-				}
-			}
-			else if(val1.equals(IMAGE) && val2.equals(FRAME))
-			{
-				binaryChain.val=FRAME;
-			}
-			else if(val1.equals(IMAGE) && val2.equals(FILE))
-			{
-				binaryChain.val=NONE;
-			}
-			else if(val1.equals(IMAGE) && binaryChain.getE1() instanceof IdentChain)
-			{
-				binaryChain.val=IMAGE;
-			}
 			
-			else if(val1.equals(IMAGE) && binaryChain.getE1() instanceof FilterOpChain)
-			{
-				if(token.kind.equals(OP_GRAY)||token.kind.equals(OP_BLUR)||token.kind.equals(OP_CONVOLVE))
-				{
-					binaryChain.val=IMAGE;
-				}
-				else
-				{
-					throw new TypeCheckException("Invalid type found" + binaryChain.firstToken.getText()+ " at " + binaryChain.firstToken.getLinePos());
-				}
-			}
+			if(t1.equals(URL) && t2.equals(IMAGE))
+				binaryChain.val=IMAGE;
 			else
-				throw new TypeCheckException("Invalid type found" + binaryChain.firstToken.getText()+ " at " + binaryChain.firstToken.getLinePos());
-				
-		}
-			
-			
-				
-		else if(binaryChain.getArrow().kind.equals(BARARROW))
-				{
-					if(val1.equals(IMAGE) && binaryChain.getE1() instanceof FilterOpChain)
-					{
-						if(token.kind.equals(OP_GRAY)||token.kind.equals(OP_BLUR)||token.kind.equals(OP_CONVOLVE))
-							binaryChain.val=IMAGE;
-						else
-						throw new TypeCheckException("Invalid type found" + binaryChain.firstToken.getText()+ " at " + binaryChain.firstToken.getLinePos());
+				if(t1.equals(FILE) && t2.equals(IMAGE))
+					binaryChain.val=IMAGE;
+				else 
+					if(t1.equals(FRAME) && chainElem instanceof FrameOpChain){
+						if(firstElemChain.kind.equals(KW_XLOC) || firstElemChain.kind.equals(KW_YLOC))
+							binaryChain.val=INTEGER;
+						
+						else if(firstElemChain.kind.equals(KW_SHOW) || firstElemChain.kind.equals(KW_HIDE) || firstElemChain.kind.equals(KW_MOVE))
+							binaryChain.val=FRAME;
+						
+							else throw new TypeCheckException("ILLEGAL TYPE");
 					}
-					else
-						throw new TypeCheckException("Invalid type found" + binaryChain.firstToken.getText()+ " at " + binaryChain.firstToken.getLinePos());throw new TypeCheckException("No other first allowed ");
-	
-		    }
-
-		else
-		{
-			throw new TypeCheckException("Invalid type found" + binaryChain.firstToken.getText()+ " at " + binaryChain.firstToken.getLinePos());
+					else if(t1.equals(IMAGE) && chainElem instanceof ImageOpChain){
+						if(firstElemChain.kind.equals(OP_WIDTH) || firstElemChain.kind.equals(OP_HEIGHT))
+							binaryChain.val=INTEGER;
+						else if(firstElemChain.kind.equals(KW_SCALE))
+							binaryChain.val=IMAGE;
+						else throw new TypeCheckException("ILLEGAL TYPE");
+					}	
+			
+					else if(t1.equals(IMAGE) && t2.equals(FRAME))
+						binaryChain.val=FRAME;
+					else if(t1.equals(IMAGE) && t2.equals(FILE))
+						binaryChain.val=NONE;
+					else if(t1.equals(IMAGE) && chainElem instanceof IdentChain)
+						binaryChain.val=IMAGE;
+					else if(t1.equals(IMAGE) && chainElem instanceof FilterOpChain){
+						if(firstElemChain.kind.equals(OP_GRAY) || firstElemChain.kind.equals(OP_BLUR) || firstElemChain.kind.equals(OP_CONVOLVE))
+							binaryChain.val=IMAGE;
+						else throw new TypeCheckException("ILLEGAL TYPE");
+						}
+					else throw new TypeCheckException("ILLEGAL TYPE");
 		}
-			return binaryChain.val;
+		else if(binaryChain.getArrow().kind.equals(BARARROW)){
+			if(t1.equals(IMAGE) && chainElem instanceof FilterOpChain){
+				if(firstElemChain.kind.equals(OP_GRAY) || firstElemChain.kind.equals(OP_BLUR) || firstElemChain.kind.equals(OP_CONVOLVE))
+					binaryChain.val=IMAGE;
+				else throw new TypeCheckException("ILLEGAL TYPE");
+				
+			}
+			
+			else throw new TypeCheckException("ILLEGAL TYPE");
+			
+		}
+		else throw new TypeCheckException("ILLEGAL TYPE");
+		return binaryChain.val;
 	}
 	
 

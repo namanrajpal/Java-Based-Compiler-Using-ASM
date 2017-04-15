@@ -62,7 +62,49 @@ public class TypeCheckVisitorTest {
 
 	public ExpectedException thrown = ExpectedException.none();
 
+	@Test
+	public void testComplicatedProgram() throws Exception{
 
+		String input = "prog1  file file1, integer itx, "
+				+ "boolean b1{ integer ii1 boolean bi1 \n "
+				+ "image IMAGE1 frame fram1 sleep itx+ii1; "
+				+ "while (b1){if(bi1)\n{sleep ii1+itx*2;}}"
+				+ "\nfile1->blur |->gray;fram1 ->yloc;\n "
+				+ "IMAGE1->blur->scale (ii1+1)|-> gray;\nii1 <- 12345+54321;}";
+
+		Scanner scanner = new Scanner(input);
+
+		scanner.scan();
+
+		Parser parser = new Parser(scanner);
+
+		ASTNode program = parser.parse();
+
+		TypeCheckVisitor v = new TypeCheckVisitor();
+
+		program.visit(v, null);		
+
+	}
+	
+	
+	@Test
+	public void testImagOp() throws Exception{
+
+		String input = "prog  boolean y , file x {\n integer z \n scale(100) -> width; blur -> y; convolve -> blur -> gray |-> gray -> width;}";
+
+		Scanner scanner = new Scanner(input);
+
+		scanner.scan();
+
+		Parser parser = new Parser(scanner);
+
+		ASTNode program = parser.parse();
+
+		TypeCheckVisitor v = new TypeCheckVisitor();
+
+		program.visit(v, null);		
+
+	}
 
 	@Test
 
