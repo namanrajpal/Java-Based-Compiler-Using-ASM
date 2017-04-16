@@ -84,14 +84,14 @@ public class TypeCheckVisitor implements ASTVisitor {
 						else if(firstElemChain.kind.equals(KW_SHOW) || firstElemChain.kind.equals(KW_HIDE) || firstElemChain.kind.equals(KW_MOVE))
 							binaryChain.val=FRAME;
 						
-							else throw new TypeCheckException("ILLEGAL TYPE");
+							else throw new TypeCheckException("ILLEGAL TYPE FOUND : " + binaryChain.val);
 					}
 					else if(t1.equals(IMAGE) && chainElem instanceof ImageOpChain){
 						if(firstElemChain.kind.equals(OP_WIDTH) || firstElemChain.kind.equals(OP_HEIGHT))
 							binaryChain.val=INTEGER;
 						else if(firstElemChain.kind.equals(KW_SCALE))
 							binaryChain.val=IMAGE;
-						else throw new TypeCheckException("ILLEGAL TYPE");
+						else throw new TypeCheckException("ILLEGAL TYPE FOUND : " + binaryChain.val);
 					}	
 			
 					else if(t1.equals(IMAGE) && t2.equals(FRAME))
@@ -103,22 +103,22 @@ public class TypeCheckVisitor implements ASTVisitor {
 					else if(t1.equals(IMAGE) && chainElem instanceof FilterOpChain){
 						if(firstElemChain.kind.equals(OP_GRAY) || firstElemChain.kind.equals(OP_BLUR) || firstElemChain.kind.equals(OP_CONVOLVE))
 							binaryChain.val=IMAGE;
-						else throw new TypeCheckException("ILLEGAL TYPE");
+						else throw new TypeCheckException("ILLEGAL TYPE FOUND : " + binaryChain.val);
 						}
-					else throw new TypeCheckException("ILLEGAL TYPE");
+					else throw new TypeCheckException("ILLEGAL TYPE FOUND : " + binaryChain.val);
 		}
 		else if(binaryChain.getArrow().kind.equals(BARARROW)){
 			if(t1.equals(IMAGE) && chainElem instanceof FilterOpChain){
 				if(firstElemChain.kind.equals(OP_GRAY) || firstElemChain.kind.equals(OP_BLUR) || firstElemChain.kind.equals(OP_CONVOLVE))
 					binaryChain.val=IMAGE;
-				else throw new TypeCheckException("ILLEGAL TYPE");
+				else throw new TypeCheckException("ILLEGAL TYPE FOUND : " + binaryChain.val);
 				
 			}
 			
-			else throw new TypeCheckException("ILLEGAL TYPE");
+			else throw new TypeCheckException("ILLEGAL TYPE FOUND : " + binaryChain.val);
 			
 		}
-		else throw new TypeCheckException("ILLEGAL TYPE");
+		else throw new TypeCheckException("ILLEGAL TYPE FOUND : " + binaryChain.val);
 		return binaryChain.val;
 	}
 	

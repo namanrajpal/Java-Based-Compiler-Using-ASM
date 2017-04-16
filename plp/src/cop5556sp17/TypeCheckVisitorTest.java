@@ -54,9 +54,6 @@ import cop5556sp17.TypeCheckVisitor.TypeCheckException;
 
 public class TypeCheckVisitorTest {
 
-	
-
-
 
 	@Rule
 
