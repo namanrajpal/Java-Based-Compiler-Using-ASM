@@ -16,7 +16,7 @@ public class IdentExpression extends Expression {
 	}
 	@Override
 	public String toString() {
-		return "IdentExpression [firstToken=" + firstToken + "]";
+		return "IdentExpression [firstToken=" + firstToken.getText() + "]";
 	}
 
 	@Override

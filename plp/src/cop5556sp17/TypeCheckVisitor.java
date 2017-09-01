@@ -30,10 +30,13 @@ import cop5556sp17.AST.Type.TypeName;
 import cop5556sp17.AST.WhileStatement;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import cop5556sp17.Scanner.Kind;
 import cop5556sp17.Scanner.LinePos;
 import cop5556sp17.Scanner.Token;
+import cop5556sp17.TypeCheckVisitor.TypeCheckException;
+
 import static cop5556sp17.AST.Type.TypeName.*;
 import static cop5556sp17.Scanner.Kind.ARROW;
 import static cop5556sp17.Scanner.Kind.KW_HIDE;
@@ -49,7 +52,8 @@ import static cop5556sp17.Scanner.Kind.OP_WIDTH;
 import static cop5556sp17.Scanner.Kind.*;
 
 public class TypeCheckVisitor implements ASTVisitor {
-
+	SymbolTable symtab = new SymbolTable();
+	
 	@SuppressWarnings("serial")
 	public static class TypeCheckException extends Exception {
 		TypeCheckException(String message) {
@@ -57,415 +61,394 @@ public class TypeCheckVisitor implements ASTVisitor {
 		}
 	}
 
-	SymbolTable symtab = new SymbolTable();
-
 	@Override
 	public Object visitBinaryChain(BinaryChain binaryChain, Object arg) throws Exception {
-		Chain chain=binaryChain.getE0();
-		ChainElem chainElem =binaryChain.getE1();
-		
-		TypeName t1=(TypeName) chain.visit(this, null);
-		TypeName t2=(TypeName) chainElem.visit(this, null);
-		Token firstElemChain=chainElem.firstToken;
-		
-		if(binaryChain.getArrow().kind.equals(ARROW))
-		{
+			Chain chain=binaryChain.getE0();
+			ChainElem chainElem =binaryChain.getE1();
+			Token arrow=binaryChain.getArrow();
+			TypeName t1=(TypeName) chain.visit(this, arg);
+			TypeName t2=(TypeName) chainElem.visit(this, arg);
+			Token firstElemChain=chainElem.firstToken;
 			
-			if(t1.equals(URL) && t2.equals(IMAGE))
-				binaryChain.val=IMAGE;
-			else
-				if(t1.equals(FILE) && t2.equals(IMAGE))
+			if(arrow.kind.equals(ARROW))
+			{
+				//System.out.println(t1 + " " + t2);
+				if(t1.equals(URL) && t2.equals(IMAGE))
 					binaryChain.val=IMAGE;
-				else 
-					if(t1.equals(FRAME) && chainElem instanceof FrameOpChain){
-						if(firstElemChain.kind.equals(KW_XLOC) || firstElemChain.kind.equals(KW_YLOC))
-							binaryChain.val=INTEGER;
-						
-						else if(firstElemChain.kind.equals(KW_SHOW) || firstElemChain.kind.equals(KW_HIDE) || firstElemChain.kind.equals(KW_MOVE))
-							binaryChain.val=FRAME;
-						
-							else throw new TypeCheckException("ILLEGAL TYPE FOUND : " + binaryChain.val);
-					}
-					else if(t1.equals(IMAGE) && chainElem instanceof ImageOpChain){
-						if(firstElemChain.kind.equals(OP_WIDTH) || firstElemChain.kind.equals(OP_HEIGHT))
-							binaryChain.val=INTEGER;
-						else if(firstElemChain.kind.equals(KW_SCALE))
-							binaryChain.val=IMAGE;
-						else throw new TypeCheckException("ILLEGAL TYPE FOUND : " + binaryChain.val);
-					}	
-			
-					else if(t1.equals(IMAGE) && t2.equals(FRAME))
-						binaryChain.val=FRAME;
-					else if(t1.equals(IMAGE) && t2.equals(FILE))
-						binaryChain.val=NONE;
-					else if(t1.equals(IMAGE) && chainElem instanceof IdentChain)
+				else
+					if(t1.equals(FILE) && t2.equals(IMAGE))
 						binaryChain.val=IMAGE;
-					else if(t1.equals(IMAGE) && chainElem instanceof FilterOpChain){
-						if(firstElemChain.kind.equals(OP_GRAY) || firstElemChain.kind.equals(OP_BLUR) || firstElemChain.kind.equals(OP_CONVOLVE))
-							binaryChain.val=IMAGE;
-						else throw new TypeCheckException("ILLEGAL TYPE FOUND : " + binaryChain.val);
+					else 
+						if(t1.equals(FRAME) && chainElem instanceof FrameOpChain){
+							if(firstElemChain.kind.equals(KW_XLOC) || firstElemChain.kind.equals(KW_YLOC))
+								binaryChain.val=INTEGER;
+							
+							else if(firstElemChain.kind.equals(KW_SHOW) || firstElemChain.kind.equals(KW_HIDE) || firstElemChain.kind.equals(KW_MOVE))
+								binaryChain.val=FRAME;
+							
+								else throw new TypeCheckException("ILLEGAL TYPE");
 						}
-					else throw new TypeCheckException("ILLEGAL TYPE FOUND : " + binaryChain.val);
-		}
-		else if(binaryChain.getArrow().kind.equals(BARARROW)){
-			if(t1.equals(IMAGE) && chainElem instanceof FilterOpChain){
-				if(firstElemChain.kind.equals(OP_GRAY) || firstElemChain.kind.equals(OP_BLUR) || firstElemChain.kind.equals(OP_CONVOLVE))
-					binaryChain.val=IMAGE;
-				else throw new TypeCheckException("ILLEGAL TYPE FOUND : " + binaryChain.val);
+						else if(t1.equals(IMAGE) && chainElem instanceof ImageOpChain){
+							if(firstElemChain.kind.equals(OP_WIDTH) || firstElemChain.kind.equals(OP_HEIGHT))
+								binaryChain.val=INTEGER;
+							else if(firstElemChain.kind.equals(KW_SCALE))
+								binaryChain.val=IMAGE;
+							else throw new TypeCheckException("ILLEGAL TYPE");
+						}	
 				
+						else if(t1.equals(IMAGE) && t2.equals(FRAME))
+							binaryChain.val=FRAME;
+						else if(t1.equals(IMAGE) && t2.equals(FILE))
+							binaryChain.val=NONE;
+						else if(t1.equals(IMAGE) && chainElem instanceof IdentChain && chainElem.val.equals(IMAGE))
+							binaryChain.val=IMAGE;
+						else if(t1.equals(INTEGER) && chainElem instanceof IdentChain && chainElem.val.equals(INTEGER))
+							binaryChain.val=INTEGER;
+						else if(t1.equals(IMAGE) && chainElem instanceof FilterOpChain){
+							if(firstElemChain.kind.equals(OP_GRAY) || firstElemChain.kind.equals(OP_BLUR) || firstElemChain.kind.equals(OP_CONVOLVE))
+								binaryChain.val=IMAGE;
+							else throw new TypeCheckException("ILLEGAL TYPE");
+							}
+						else throw new TypeCheckException("\nILLEGAL TYPE " + binaryChain.firstToken.getLinePos() + ":\n" + binaryChain.toString());
 			}
 			
-			else throw new TypeCheckException("ILLEGAL TYPE FOUND : " + binaryChain.val);
-			
-		}
-		else throw new TypeCheckException("ILLEGAL TYPE FOUND : " + binaryChain.val);
-		return binaryChain.val;
+			else if(arrow.kind.equals(BARARROW)){
+				if(t1.equals(IMAGE) && chainElem instanceof FilterOpChain){
+					if(firstElemChain.kind.equals(OP_GRAY) || firstElemChain.kind.equals(OP_BLUR) || firstElemChain.kind.equals(OP_CONVOLVE))
+						binaryChain.val=IMAGE;
+					else throw new TypeCheckException("ILLEGAL TYPE");
+					
+				}
+				
+				else throw new TypeCheckException("ILLEGAL TYPE");
+				
+			}
+			else throw new TypeCheckException("ILLEGAL TYPE");
+			return binaryChain.val;
+		
 	}
-	
 
 	@Override
 	public Object visitBinaryExpression(BinaryExpression binaryExpression, Object arg) throws Exception {
-		// TODO 
-		TypeName val1=(TypeName)binaryExpression.getE0().visit(this,null);
-		TypeName val2=(TypeName)binaryExpression.getE1().visit(this,null);
 		
-		if(binaryExpression.getOp().kind.equals(PLUS)||binaryExpression.getOp().kind.equals(MINUS))
+		Expression exp1=binaryExpression.getE0();
+		Expression exp2=binaryExpression.getE1();
+		Token operator=binaryExpression.getOp();
+		//System.out.println("Serving " + exp1.firstToken.getText() + " " + exp2.firstToken.getText());
+		
+		TypeName t1=(TypeName) exp1.visit(this, null);
+		TypeName t2=(TypeName) exp2.visit(this, null);
+		if(operator.kind.equals(PLUS) ||operator.kind.equals(MINUS))
 		{
-			if(val1.equals(INTEGER)&&val2.equals(INTEGER))
-			{
+			if(t1.equals(INTEGER) && t2.equals(INTEGER))
 				binaryExpression.val=INTEGER;
-			}
-			else if(val1.equals(IMAGE)&&val2.equals(IMAGE))
-			{
+			else if(t1.equals(IMAGE) && t2.equals(IMAGE))
 				binaryExpression.val=IMAGE;
-			}
-			else 
-			{
-				throw new TypeCheckException("Invalid type found" + binaryExpression.firstToken.getText()+ " at " + binaryExpression.firstToken.getLinePos());
-			}
+			else throw new TypeCheckException("ILLEGAL TYPE");
+				
 		}
 		
-		else if(binaryExpression.getOp().kind.equals(TIMES))
+		else if(operator.kind.equals(TIMES))
 		{
-			if(val1.equals(INTEGER)&&val2.equals(IMAGE))
-			{
-				binaryExpression.val=IMAGE;
-			}
-			else if(val1.equals(IMAGE)&&val2.equals(INTEGER))
-			{
-				binaryExpression.val=IMAGE;
-			}
-			else if(val1.equals(INTEGER)&&val2.equals(INTEGER))
-			{
+			if(t1.equals(INTEGER) && t2.equals(INTEGER))
 				binaryExpression.val=INTEGER;
-			}
-			else
-			{  
+			else if(t1.equals(INTEGER) && t2.equals(IMAGE))
+				binaryExpression.val=IMAGE;
+			else if(t1.equals(IMAGE) && t2.equals(INTEGER))
+				binaryExpression.val=IMAGE;
+			else throw new TypeCheckException("ILLEGAL TYPE");
 			
-				throw new TypeCheckException("Invalid type found" + binaryExpression.firstToken.getText()+ " at " + binaryExpression.firstToken.getLinePos());
-			}
+			
 		}
-		else if(binaryExpression.getOp().kind.equals(LT)||binaryExpression.getOp().kind.equals(GT)||binaryExpression.getOp().kind.equals(LE)||binaryExpression.getOp().kind.equals(GE))
+		
+		else if(operator.kind.equals(DIV))
 		{
-			if(val1.equals(INTEGER)&&val2.equals(INTEGER))
-			{
-				binaryExpression.val=BOOLEAN;
-			}
-			else if(val1.equals(BOOLEAN)&&val2.equals(BOOLEAN))
-			{
-				binaryExpression.val=BOOLEAN;
-			}
-			else
-			{
-				throw new TypeCheckException("Invalid type found" + binaryExpression.firstToken.getText()+ " at " + binaryExpression.firstToken.getLinePos());
-			}
-		}
-		else if(binaryExpression.getOp().kind.equals(EQUAL)||binaryExpression.getOp().kind.equals(NOTEQUAL))
-		{
-			if(val1.equals(val2))
-			{
-				binaryExpression.val=BOOLEAN;
-			}
-			else
-			{
-			 throw new TypeCheckException("Invalid type found" + binaryExpression.firstToken.getText()+ " at " + binaryExpression.firstToken.getLinePos());
-			}
-		}
-		else if(binaryExpression.getOp().kind.equals(DIV))
-		{
-			if(val1.equals(INTEGER)&&val2.equals(INTEGER))
-			{
+			if(t1.equals(INTEGER) && t2.equals(INTEGER))
 				binaryExpression.val=INTEGER;
+			else if(t1.equals(IMAGE) && t2.equals(INTEGER))
+				binaryExpression.val=IMAGE;
+			else throw new TypeCheckException("ILLEGAL TYPE");
 			}
-			else
-			{
-				throw new TypeCheckException("Invalid type found" + binaryExpression.firstToken.getText()+ " at " + binaryExpression.firstToken.getLinePos());
-			}
-		}
-		else
+		
+		
+		else if(operator.kind.equals(LT) ||operator.kind.equals(GT) || operator.kind.equals(LE) ||operator.kind.equals(GE))
 		{
-			throw new TypeCheckException("Invalid type found" + binaryExpression.firstToken.getText()+ " at " + binaryExpression.firstToken.getLinePos());
+			if(t1.equals(INTEGER) && t2.equals(INTEGER))
+				binaryExpression.val=BOOLEAN;
+			else if(t1.equals(BOOLEAN) && t2.equals(BOOLEAN))
+				binaryExpression.val=BOOLEAN;
+			else throw new TypeCheckException("ILLEGAL TYPE");
+				
 		}
+		
+		else if(operator.kind.equals(EQUAL) ||operator.kind.equals(NOTEQUAL)){
+			if(t1.equals(t2))
+				binaryExpression.val=BOOLEAN;
+			
+			else throw new TypeCheckException("ILLEGAL TYPE");
+		}else if(operator.kind.equals(AND) ||operator.kind.equals(OR))
+		{
+			if(t1.equals(t2))
+				binaryExpression.val=BOOLEAN;
+			
+			else throw new TypeCheckException("ILLEGAL TYPE");
+		}else if(operator.kind.equals(MOD))
+		{
+			if(t1.equals(INTEGER) && t2.equals(INTEGER))
+				binaryExpression.val=t1;
+			else if(t1.equals(IMAGE) && t2.equals(INTEGER))
+				binaryExpression.val=t1;
+			else throw new TypeCheckException("ILLEGAL TYPE");
+		}
+		else throw new TypeCheckException("ILLEGAL TYPE :\n " + binaryExpression.toString() + " "+ binaryExpression.val);
+		
 		return binaryExpression.val;
 	}
 
 	@Override
 	public Object visitBlock(Block block, Object arg) throws Exception {
-		// TODO Auto-generated method stub
 		symtab.enterScope();
+		//System.out.println(block.toString());
 		
-		for(Dec d:block.getDecs())
-			d.visit(this,null);
-			
-		for(Statement s:block.getStatements())
-			s.visit(this,null);
-		
+		for(Dec dec:block.getDecs()){
+			dec.visit(this,arg);
+		}
+		for(Statement stmt:block.getStatements()){
+			stmt.visit(this,arg);
+		}
 		symtab.leaveScope();
 		return null;
 	}
 
+	
 	@Override
 	public Object visitBooleanLitExpression(BooleanLitExpression booleanLitExpression, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		
 		booleanLitExpression.val=BOOLEAN;
 		return booleanLitExpression.val;
-		
 	}
 
 	@Override
 	public Object visitFilterOpChain(FilterOpChain filterOpChain, Object arg) throws Exception {
-		// TODO Auto-generated method stub
+		Tuple t=filterOpChain.getArg();
+		List<Expression> exprList=t.getExprList();
+		t.visit(this, arg);
 		
-		filterOpChain.getArg().visit(this, null);
-		if(filterOpChain.getArg().getExprList().size() == 0)
+		if(exprList.size() == 0)
 			filterOpChain.val = IMAGE;
+		else
+			throw new TypeCheckException("ILLEGAL TYPE");
 		
-		else throw new TypeCheckException("Invalid type found" + filterOpChain.firstToken.getText()+ " at " + filterOpChain.firstToken.getLinePos());
 		return filterOpChain.val;
 	}
-		
 
 	@Override
 	public Object visitFrameOpChain(FrameOpChain frameOpChain, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-	
-		frameOpChain.getArg().visit(this, null);
+		Tuple t=frameOpChain.getArg();
+		List<Expression> exprList=t.getExprList();
+		t.visit(this, arg);
+		Kind frameOp = frameOpChain.getFirstToken().kind;
+		//System.out.println(frameOp.text);
 		
-		Kind token = frameOpChain.getFirstToken().kind;
-		
-		if(token.equals(KW_SHOW) || token.equals(KW_HIDE))
+		switch(frameOp)
 		{
-			if(frameOpChain.getArg().getExprList().size()==0)
+		case KW_SHOW:
+		case KW_HIDE:
+		{
+			if(exprList.size() == 0)
 				frameOpChain.val = NONE;
-			else throw new TypeCheckException("Invalid type found" + frameOpChain.firstToken.getText()+ " at " + frameOpChain.firstToken.getLinePos());
-		}
-		
-		else if(token.equals(KW_MOVE))
+			else
+				throw new TypeCheckException("ILLEGAL TYPE");
+		}break;
+		case KW_XLOC:
+		case KW_YLOC:
 		{
-			if(frameOpChain.getArg().getExprList().size()==2)
-				frameOpChain.val = NONE;
-			else throw new TypeCheckException("Invalid Cse " + frameOpChain.firstToken.getText() + " at " + frameOpChain.firstToken.getLinePos());
-		}
-		else if(token.equals(KW_XLOC) || token.equals(KW_YLOC))
-		{
-			if(frameOpChain.getArg().getExprList().size()==0)
+			if(exprList.size() == 0)
 				frameOpChain.val = INTEGER;
-			else throw new TypeCheckException("Invalid type found " + frameOpChain.firstToken.getText() + " at " + frameOpChain.firstToken.getLinePos());
+			else
+				throw new TypeCheckException("ILLEGAL TYPE");
+		}break;
+		case KW_MOVE:
+		{
+			if(exprList.size() == 2)
+				frameOpChain.val = NONE;
+			else
+				throw new TypeCheckException("ILLEGAL TYPE");
+		} break;
+		
+		default:
+			throw new TypeCheckException("ILLEGAL TYPE");
 		}
-		else 
-			throw new TypeCheckException("Invalid type found" + frameOpChain.firstToken.getText()+ " at " + frameOpChain.firstToken.getLinePos());
 		
 		return frameOpChain.val;
-	}
 	
+	}
 
 	@Override
 	public Object visitIdentChain(IdentChain identChain, Object arg) throws Exception {
-		// TODO Auto-generated method stub
+		Dec dec= symtab.lookup(identChain.firstToken.getText());
 		
-		Dec new_ident = symtab.lookup(identChain.firstToken.getText());
-		
-		if(new_ident != null)
-		{
-			identChain.val = new_ident.val;
-		}
+		if(dec!=null){
+			identChain.val = dec.val;
+			identChain.dec = dec;
+	}
 		else
-			throw new TypeCheckException("Invalid type found" + identChain.firstToken.getText()+ " at " + identChain.firstToken.getLinePos());
+			throw new TypeCheckException("ILLEGAL TYPE");
 		
 		return identChain.val;
 	}
-	
 
 	@Override
 	public Object visitIdentExpression(IdentExpression identExpression, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		Dec new_ident = symtab.lookup(identExpression.firstToken.getText());
-		if(new_ident != null)
+		Dec dec= symtab.lookup(identExpression.firstToken.getText());
+		
+		if(dec != null)
 		{
-			identExpression.val = new_ident.val;
-			identExpression.dec = new_ident;
+			identExpression.val =dec.val;
+			identExpression.dec = dec;
 		}
+		
 		else
-			throw new TypeCheckException("Invalid type found" + identExpression.firstToken.getText()+ " at " + identExpression.firstToken.getLinePos());
+			throw new TypeCheckException("ILLEGAL TYPE");
+		
 		return identExpression.val;
 	}
 	
 
 	@Override
 	public Object visitIfStatement(IfStatement ifStatement, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		
-		Expression e=ifStatement.getE();
-		if(!e.visit(this,null).equals(BOOLEAN))
-			throw new TypeCheckException("Invalid type found" + ifStatement.firstToken.getText()+ " at " + ifStatement.firstToken.getLinePos());
-	    
-		Block b=ifStatement.getB();
-		b.visit(this,null);
+		Expression exp=ifStatement.getE();
+		if(!exp.visit(this,arg).equals(BOOLEAN))
+			throw new TypeCheckException("ILLEGAL TYPE"); 
+		ifStatement.getB().visit(this,arg);		
 		return null;
 	}
-	
 
 	@Override
 	public Object visitIntLitExpression(IntLitExpression intLitExpression, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		intLitExpression.val = INTEGER;
+		intLitExpression.val=INTEGER;
 		return intLitExpression.val;
 	}
 
 	@Override
 	public Object visitSleepStatement(SleepStatement sleepStatement, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-	
-		Expression e=sleepStatement.getE();
-		if(!e.visit(this,null).equals(INTEGER))
-			throw new TypeCheckException("Invalid type found" + sleepStatement.firstToken.getText()+ " at " + sleepStatement.firstToken.getLinePos());
+		Expression exp=sleepStatement.getE();
+		if(!exp.visit(this,arg).equals(INTEGER))
+			throw new TypeCheckException("ILLEGAL TYPE"); 
+				
 		return null;
 	}
 
 	@Override
 	public Object visitWhileStatement(WhileStatement whileStatement, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		Expression e=whileStatement.getE();
-		if(!e.visit(this,null).equals(BOOLEAN))
-			throw new TypeCheckException("Invalid type found" + whileStatement.firstToken.getText()+ " at " + whileStatement.firstToken.getLinePos());
-		Block b=whileStatement.getB();
-		b.visit(this,null);
+		Expression exp=whileStatement.getE();
+		if(!exp.visit(this,arg).equals(BOOLEAN))
+			throw new TypeCheckException("ILLEGAL TYPE"); 
+		whileStatement.getB().visit(this,null);		
 		return null;
 	}
-	
 
 	@Override
 	public Object visitDec(Dec declaration, Object arg) throws Exception {
-		// TODO Auto-generated method stub
+		declaration.val = Type.getTypeName(declaration.getFirstToken());
+		Boolean b = symtab.insert(declaration.getIdent().getText(), declaration);
+		if(!b)
+			throw new TypeCheckException("ILLEGAL TYPE at Line: " + declaration.firstToken.pos + " "+ declaration.toString());
 		
-       declaration.val=Type.getTypeName(declaration.getFirstToken());
-		
-		if(!symtab.insert(declaration.getIdent().getText(), declaration))
-		throw new TypeCheckException("Invalid type found" + declaration.firstToken.getText()+ " at " + declaration.firstToken.getLinePos());
 		return declaration.val;
 	}
 
 	@Override
 	public Object visitProgram(Program program, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		for(ParamDec p:program.getParams())
+		Block b=program.getB();
+		for(ParamDec x: program.getParams())
 		{
-			p.visit(this,null);
-			
+			x.visit(this,arg);
 		}
-		program.getB().visit(this,null);
+		b.visit(this, arg);
 		return null;
-	}	
-	
+		
+	}
 
 	@Override
 	public Object visitAssignmentStatement(AssignmentStatement assignStatement, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-	
-		if(assignStatement.getVar().visit(this, null).equals(assignStatement.getE().visit(this, null)))
-		{}
-		else
-			throw new TypeCheckException("Illegal Type" + assignStatement.firstToken.getText()+ " at " + assignStatement.firstToken.getLinePos());
+		if (!(assignStatement.getVar().visit(this, null).equals(assignStatement.getE().visit(this, null))))
+			throw new TypeCheckException("ILLEGAL TYPE");
 		
 		return null;
-	
 	}
 
 	@Override
 	public Object visitIdentLValue(IdentLValue identX, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		
-		Dec ident = symtab.lookup(identX.firstToken.getText());
-		
-		if(ident!= null)
-			identX.dec = ident;
+		Dec d =symtab.lookup(identX.firstToken.getText());
+		if(d!=null)
+		{
+			identX.dec=d;
+			identX.val = d.val;
+		}
 		else
-			throw new TypeCheckException("Invalid type found" + identX.firstToken.getText()+ " at " + identX.firstToken.getLinePos());
-		return identX.getdec().val;
+			throw new TypeCheckException("ILLEGAL TYPE");
+			
+			
+		return identX.getDec().val;
 	}
-	
 
 	@Override
 	public Object visitParamDec(ParamDec paramDec, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		
 		paramDec.val = Type.getTypeName(paramDec.getFirstToken());
-		if(!symtab.insert(paramDec.getIdent().getText(), paramDec))
-			throw new TypeCheckException("Invalid type found" + paramDec.firstToken.getText()+ " at " + paramDec.firstToken.getLinePos());
-		
+		Boolean b = symtab.insert(paramDec.getIdent().getText(), paramDec);
+		if(!b)
+			throw new TypeCheckException("ILLEGAL TYPE");
 		return paramDec.val;
 	}
-	
 
 	@Override
 	public Object visitConstantExpression(ConstantExpression constantExpression, Object arg) {
-		// TODO Auto-generated method stub
-	
-		constantExpression.val = INTEGER;
+		constantExpression.val=INTEGER;
 		return constantExpression.val;
 	}
 
 	@Override
 	public Object visitImageOpChain(ImageOpChain imageOpChain, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		
-		imageOpChain.getArg().visit(this,null);
-		
-		Kind token = imageOpChain.getFirstToken().kind;
-		
-		if(token.equals(OP_WIDTH) || token.equals(OP_HEIGHT))
+		imageOpChain.getArg().visit(this, arg);
+		Kind imageOp = imageOpChain.getFirstToken().kind;
+		List<Expression> exprlist=imageOpChain.getArg().getExprList();
+		switch(imageOp)
+		{case KW_SCALE:
 		{
-			if(imageOpChain.getArg().getExprList().size()==0)
+			if(exprlist.size() == 1)
+				imageOpChain.val= IMAGE;
+			else
+				throw new TypeCheckException("ILLEGAL TYPE");
+		}
+		break;
+		case OP_WIDTH:
+		case OP_HEIGHT:
+		{
+			if(exprlist.size() == 0)
 				imageOpChain.val = INTEGER;
-			
-			else throw new TypeCheckException("Invalid type found " + imageOpChain.firstToken.getText() + " at " + imageOpChain.firstToken.getLinePos());
+			else
+				throw new TypeCheckException("ILLEGAL TYPE");
 		}
-		else if(token.equals(KW_SCALE))
-		{
-			if(imageOpChain.getArg().getExprList().size()==1)
-				imageOpChain.val = IMAGE;
-			
-			else throw new TypeCheckException("Invalid type found " + imageOpChain.firstToken.getText() + " at " + imageOpChain.firstToken.getLinePos());
+		break;
+		default:
+			throw new TypeCheckException("ILLEGAL TYPE");
 		}
-		else 
-			throw new TypeCheckException("Invalid type found " + imageOpChain.firstToken.getText() + " at " + imageOpChain.firstToken.getLinePos());
 		
 		return imageOpChain.val;
-		
 	}
 
 	@Override
 	public Object visitTuple(Tuple tuple, Object arg) throws Exception {
-		// TODO Auto-generated method stub
-		for(Expression e : tuple.getExprList())
+		List<Expression> exprlist= tuple.getExprList();
+		for(Expression e:exprlist)
 		{
-			if(!e.visit(this,null).equals(INTEGER))
-				throw new TypeCheckException("Invalid type found" + tuple.firstToken.getText()+ " at " + tuple.firstToken.getLinePos());
+			if(!e.visit(this,arg).equals(INTEGER))
+				throw new TypeCheckException("ILLEGAL TYPE + " + e.firstToken.getText() ); 
+				
 		}
+		
 		return null;
 	}
-	}
 
 
-
+}

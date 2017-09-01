@@ -3,7 +3,9 @@ package cop5556sp17;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
 
 import cop5556sp17.AST.Dec;
@@ -23,10 +25,10 @@ public class SymbolTable {
 	 * to be called when block entered
 	 */
 	public void enterScope(){
-		//TODO:
-		currentscope=nextscope++;
-		scope_stack.push(currentscope);
 		
+		//System.out.println("Entering scope");
+		currentscope=++nextscope;
+		scope_stack.push(currentscope);
 		
 	}
 	
@@ -44,6 +46,14 @@ public class SymbolTable {
 	public boolean insert(String ident, Dec dec){
 		//TODO:  
 		
+		/*for (String name: map.keySet()){
+
+            String key =name.toString();
+            ArrayList<Symtable> value = map.get(name);  
+            System.out.println(key + " " + Arrays.toString(value.toArray()));  
+		} 
+		System.out.println(ident+ " current scope: "+ currentscope+"\n");*/
+		
 		Symtable st=new Symtable(currentscope,dec);
 		ArrayList<Symtable> list=new ArrayList<Symtable>();
 		
@@ -52,6 +62,7 @@ public class SymbolTable {
 			list=map.get(ident);
 			for(Symtable ele:list)
 			{
+				//System.out.println(ele.scope + " "+ currentscope );
 				if(ele.scope==currentscope)
 					return false;
 			}

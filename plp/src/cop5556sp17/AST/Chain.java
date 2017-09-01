@@ -11,5 +11,10 @@ public abstract class Chain extends Statement {
 	public Chain(Token firstToken) {
 		super(firstToken);
 	}
+	
+	public TypeName getType()
+	{
+		return val;
+	}
 
 }

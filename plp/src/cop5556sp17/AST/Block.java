@@ -24,7 +24,7 @@ public class Block extends ASTNode {
 	
 	@Override
 	public String toString() {
-		return "Block [decList=" + decList + ", statementList=" + statementList + "]";
+		return "Block [decList=" + decList.toString() + ", statementList=" + statementList.toString() + "]";
 	}
 	
 	

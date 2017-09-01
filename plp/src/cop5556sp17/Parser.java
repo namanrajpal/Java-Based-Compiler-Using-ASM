@@ -355,7 +355,7 @@ public class Parser {
 			}
 		//Consuming OP
 		}
-		
+		//System.out.println(s.firstToken.getText());
 		return s;
 	}
 

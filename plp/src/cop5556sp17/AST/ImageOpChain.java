@@ -17,7 +17,7 @@ public class ImageOpChain extends ChainElem {
 
 	@Override
 	public String toString() {
-		return "ImageOpChain [tuple=" + tuple + ", firstToken=" + firstToken + "]";
+		return " \n ImageOpChain [tuple=" + tuple + ", firstToken=" + firstToken.getText() + "]";
 	}
 
 	@Override

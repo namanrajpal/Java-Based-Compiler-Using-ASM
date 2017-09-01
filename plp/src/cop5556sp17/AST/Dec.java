@@ -7,15 +7,25 @@ public class Dec extends ASTNode {
 	
 	final Token ident;
 	public TypeName val;
-
+	int slot;
+	
 	public Dec(Token firstToken, Token ident) {
 		super(firstToken);
 
 		this.ident = ident;
 	}
-
-	public Token getType() {
-		return firstToken;
+	
+	public int getSlot(){
+		return slot;
+	}
+	
+	public void setSlot(int slot){
+		this.slot = slot;
+	}
+	
+	
+	public TypeName getType() {
+		return val;
 	}
 
 	public Token getIdent() {
@@ -24,7 +34,7 @@ public class Dec extends ASTNode {
 
 	@Override
 	public String toString() {
-		return "Dec [ident=" + ident + ", firstToken=" + firstToken + "]";
+		return "\nDec [ident=" + ident.getText() + ", firstToken=" + firstToken.getText() + "]";
 	}
 	
 	

@@ -46,7 +46,7 @@ public class ParserTest {
 
 	@Test
 	public void testProgram0() throws IllegalCharException, IllegalNumberException, SyntaxException{
-		String input = "prog0 {}";
+		String input = "prog0 file f1 {\n image i integer h f1->i->height->h;}";
 		Parser parser = new Parser(new Scanner(input).scan());
 		parser.parse();
 	}
@@ -78,7 +78,7 @@ public class ParserTest {
 	
 	@Test
 	public void testProg() throws IllegalCharException, IllegalNumberException, SyntaxException{
-		String input = " see{ if(true){sleep 5;}  }   ";
+		String input = "abc integer temporary, boolean valid, integer number {boolean temporary temporary <- true; if(temporary) {valid <- false;number <- 6;}} ";
 		Parser parser = new Parser(new Scanner(input).scan());
 		parser.parse();
 	}

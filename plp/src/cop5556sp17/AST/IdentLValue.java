@@ -14,10 +14,10 @@ public class IdentLValue extends ASTNode {
 	
 	@Override
 	public String toString() {
-		return "IdentLValue [firstToken=" + firstToken + "]";
+		return "IdentLValue [firstToken=" + firstToken.getText() + "]";
 	}
 	
-	public Dec getdec()
+	public Dec getDec()
 	{
 		return dec;
 	}
@@ -26,7 +26,11 @@ public class IdentLValue extends ASTNode {
 	public Object visit(ASTVisitor v, Object arg) throws Exception {
 		return v.visitIdentLValue(this,arg);
 	}
-
+	
+	public TypeName getType(){
+		return val;
+	}
+	
 	public String getText() {
 		return firstToken.getText();
 	}

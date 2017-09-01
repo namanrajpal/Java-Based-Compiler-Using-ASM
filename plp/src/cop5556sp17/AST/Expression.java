@@ -14,4 +14,9 @@ public abstract class Expression extends ASTNode {
 	@Override
 	abstract public Object visit(ASTVisitor v, Object arg) throws Exception;
 
+	public TypeName getType() {
+		
+		return val;
+	}
+
 }

@@ -30,7 +30,7 @@ public class BinaryChain extends Chain {
 	
 	@Override
 	public String toString() {
-		return "BinaryChain [e0=" + e0 + ", arrow=" + arrow + ", e1=" + e1 +"]";
+		return "BinaryChain [e0=" + e0 + ", arrow=" + arrow.getText() + ", e1=" + e1 +"]";
 	}
 	
 	

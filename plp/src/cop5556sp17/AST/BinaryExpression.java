@@ -75,7 +75,7 @@ public class BinaryExpression extends Expression {
 
 	@Override
 	public String toString() {
-		return "BinaryExpression [e0=" + e0 + ", op=" + op + ", e1=" + e1 + "]";
+		return "BinaryExpression [e0=" + e0.getType() + ", op=" + op.getText() + ", e1=" + e1.getType() + "]";
 	}
 	
 	@Override
